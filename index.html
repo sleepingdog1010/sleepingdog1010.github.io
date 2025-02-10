@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Valentine's Surprise</title>
+    <style>
+        /* Load "Press Start 2P" from Google Fonts (pixel-like) */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        /* Base styling */
+        body {
+            margin: 0;
+            background-color: #ffccf9;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Force pixel look on anything with .pixel-font */
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+            /* Turn off font smoothing to get a blocky, pixel-like edge */
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: auto;
+            /* or "grayscale" or "none" depending on your preference */
+            font-smooth: never;
+            /* not all browsers support this, but it's helpful */
+            text-rendering: optimizeSpeed;
+            /* optional, can help in some browsers */
+        }
+
+        /* The MAIN tooth that opens the envelope */
+        .tooth {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            user-select: none;
+            z-index: 2;
+        }
+
+        .tooth:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Envelope styling using our .pixel-font for a more bitmap look */
+        .envelope {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 350px;
+            background-color: #fff;
+            border: 4px solid #000;
+            box-shadow: 0 8px 0 #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            /* Here is the pixel font class */
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.3rem;
+            text-align: center;
+            z-index: 10;
+
+            /* Or if you want the full effect, do: */
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: auto;
+            font-smooth: never;
+        }
+
+        .envelope.open {
+            display: flex;
+            animation: popUp 0.5s ease;
+        }
+
+        .envelope p {
+            margin: 0.5rem 0;
+            color: #e91e63;
+        }
+
+        .envelope button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #ff6f61;
+            border: 4px solid #000;
+            box-shadow: 0 4px 0 #000;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            /* And the pixel smoothing off if you like */
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: auto;
+            font-smooth: never;
+        }
+
+        .envelope button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Envelope pop animation */
+        @keyframes popUp {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Floating DRAGGABLE tooth containers (made bigger) */
+        .floating-tooth {
+            position: absolute;
+            user-select: none;
+            pointer-events: all;
+            z-index: 1;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .floating-tooth .tooth-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 5rem;
+            pointer-events: none;
+        }
+
+        .floating-tooth img {
+            width: 50px;
+            height: auto;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Animations (10s for slower float) */
+        @keyframes floatUp {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(0, -200px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatDown {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(0, 200px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatLeft {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-200px, 0) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatRight {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(200px, 0) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatUpRight {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(150px, -150px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatUpLeft {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-150px, -150px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatDownRight {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(150px, 150px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatDownLeft {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-150px, 150px) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .float-up {
+            animation: floatUp 10s ease-in-out forwards;
+        }
+
+        .float-down {
+            animation: floatDown 10s ease-in-out forwards;
+        }
+
+        .float-left {
+            animation: floatLeft 10s ease-in-out forwards;
+        }
+
+        .float-right {
+            animation: floatRight 10s ease-in-out forwards;
+        }
+
+        .float-up-right {
+            animation: floatUpRight 10s ease-in-out forwards;
+        }
+
+        .float-up-left {
+            animation: floatUpLeft 10s ease-in-out forwards;
+        }
+
+        .float-down-right {
+            animation: floatDownRight 10s ease-in-out forwards;
+        }
+
+        .float-down-left {
+            animation: floatDownLeft 10s ease-in-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- MAIN tooth that opens the envelope: do not modify -->
+    <div class="tooth" id="tooth" onclick="handleMainToothClick()">🦷</div>
+
+    <!-- Envelope with pixelated text -->
+    <div class="envelope" id="envelope">
+        <p>Happy Valentine's!</p>
+        <p>To my favorite dentist, you make my heart sparkle like a polished tooth! 🦷✨</p>
+        <button onclick="closeEnvelope()">Close</button>
+    </div>
+
+    <script>
+        // Global reference for the setInterval, so we can clear if needed
+        let floatingInterval = null;
+        let hasSpawnedFloatingTeeth = false;
+
+        // MAIN tooth click => open envelope and spawn floating teeth (only once)
+        function handleMainToothClick() {
+            openEnvelope();
+            if (!hasSpawnedFloatingTeeth) {
+                floatingInterval = setInterval(createFloatingTooth, 1000); // 1s spawn
+                hasSpawnedFloatingTeeth = true;
+            }
+        }
+
+        // Envelope open/close
+        function openEnvelope() {
+            const envelope = document.getElementById('envelope');
+            envelope.classList.add('open');
+        }
+        function closeEnvelope() {
+            const envelope = document.getElementById('envelope');
+            envelope.classList.remove('open');
+        }
+
+        // Image array
+        const floatingToothImages = [
+            'https://cdn.filestackcontent.com/puAH78BTMKxMDcclV0ti',
+            'https://cdn.filestackcontent.com/cmPE5JE7T1eQZpae8xOW',
+            'https://cdn.filestackcontent.com/PrY9g5DwSeiZcZxGze9L',
+            'https://cdn.filestackcontent.com/fuDnT0bATAiH6BaRX8gB'
+        ];
+
+        function createFloatingTooth() {
+            const floatContainer = document.createElement('div');
+            floatContainer.classList.add('floating-tooth');
+
+            // Pick random direction
+            const directions = [
+                'float-up', 'float-down', 'float-left', 'float-right',
+                'float-up-right', 'float-up-left', 'float-down-right', 'float-down-left'
+            ];
+            const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+            floatContainer.classList.add(randomDirection);
+
+            // Random position
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            floatContainer.style.left = `${x}px`;
+            floatContainer.style.top = `${y}px`;
+
+            // The tooth frame
+            const toothFrame = document.createElement('span');
+            toothFrame.classList.add('tooth-frame');
+            toothFrame.textContent = '🦷';
+            floatContainer.appendChild(toothFrame);
+
+            // One random image
+            const singleImg = floatingToothImages[Math.floor(Math.random() * floatingToothImages.length)];
+            const singleImgEl = document.createElement('img');
+            singleImgEl.src = singleImg;
+            floatContainer.appendChild(singleImgEl);
+
+            document.body.appendChild(floatContainer);
+
+            // Remove after 10s
+            setTimeout(() => {
+                floatContainer.remove();
+            }, 10000);
+        }
+
+        // Draggable logic
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+        let currentEl = null;
+        let startX = 0;
+        let startY = 0;
+        let totalDistance = 0;
+        const TAP_THRESHOLD = 10; // px
+
+        document.addEventListener('pointerdown', (e) => {
+            if (e.target.classList.contains('tooth') || e.target.closest('.floating-tooth')) {
+                currentEl = e.target.closest('.tooth, .floating-tooth');
+                isDragging = true;
+                totalDistance = 0;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const rect = currentEl.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('pointermove', (e) => {
+            if (isDragging && currentEl) {
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                currentEl.style.left = `${x}px`;
+                currentEl.style.top = `${y}px`;
+                currentEl.style.transform = 'none';
+
+                const distX = e.clientX - startX;
+                const distY = e.clientY - startY;
+                totalDistance = Math.sqrt(distX * distX + distY * distY);
+            }
+        });
+
+        document.addEventListener('pointerup', () => {
+            if (isDragging && currentEl) {
+                if (totalDistance < TAP_THRESHOLD && currentEl.classList.contains('floating-tooth')) {
+                    currentEl.remove();
+                }
+            }
+            isDragging = false;
+            currentEl = null;
+        });
+    </script>
+</body>
+
+</html>
