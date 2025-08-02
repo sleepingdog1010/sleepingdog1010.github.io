@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fukuoka Itinerary Map - November 8-16, 2024</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            max-width: 100vw;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px 25px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .trip-dates {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            margin: 15px 0 0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .itinerary-day {
+            margin: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .itinerary-day:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .day-header {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .day-header:hover {
+            background: linear-gradient(135deg, #3a8bfe, #00d4fe);
+            transform: translateX(5px);
+        }
+
+        .day-header.active {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .day-header::after {
+            content: '👆 Click to filter map';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .day-attractions {
+            padding: 20px;
+        }
+
+        .attraction-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .attraction-item:last-child {
+            border-bottom: none;
+        }
+
+        .attraction-item:hover {
+            background: #f8faff;
+            padding-left: 10px;
+        }
+
+        .attraction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .attraction-details h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .attraction-details p {
+            font-size: 12px;
+            color: #666;
+            font-weight: 400;
+        }
+
+        #map {
+            flex: 1;
+            height: 100vh;
+            position: relative;
+        }
+
+        .custom-popup {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .popup-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .popup-description {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .popup-category {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 12px;
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .legend-line {
+            height: 3px;
+            width: 30px;
+            margin-right: 8px;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .leaflet-popup-tip {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .route-label {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border: 2px solid;
+        }
+
+        .transport-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 50vh;
+            }
+            
+            #map {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>🇯🇵 Fukuoka Adventure</h1>
+                <p>Your Ultimate Japan Experience</p>
+                <div class="trip-dates">
+                    📅 November 8-16, 2024
+                </div>
+                <button onclick="showAllDays()" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 8px 16px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 12px; margin-right: 5px;">
+                    🗺️ Show All Days
+                </button>
+                <button onclick="clearRoute()" style="background: rgba(255,255,255,0.3); border: none; color: white; padding: 8px 16px; border-radius: 20px; margin-top: 10px; cursor: pointer; font-size: 12px;">
+                    🚫 Clear Route
+                </button>
+            </div>
+            
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(1)">Day 1 - November 8 (Arrival)</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.5904, 130.4017)">
+                        <div class="attraction-icon">🏨</div>
+                        <div class="attraction-details">
+                            <h3>Check-in & Tenjin District</h3>
+                            <p>Explore central Fukuoka, shopping and dining</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5914, 130.3986)">
+                        <div class="attraction-icon">🍜</div>
+                        <div class="attraction-details">
+                            <h3>Yatai Food Stalls</h3>
+                            <p>Traditional street food experience</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5893, 130.4015)">
+                        <div class="attraction-icon">🍲</div>
+                        <div class="attraction-details">
+                            <h3>Ichiran Ramen Honten</h3>
+                            <p>Famous tonkotsu ramen birthplace</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(2)">Day 2 - November 9</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.6066, 130.4181)">
+                        <div class="attraction-icon">🏯</div>
+                        <div class="attraction-details">
+                            <h3>Fukuoka Castle Ruins</h3>
+                            <p>Historic castle grounds and cherry blossom park</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5845, 130.3933)">
+                        <div class="attraction-icon">⛩️</div>
+                        <div class="attraction-details">
+                            <h3>Kushida Shrine</h3>
+                            <p>Ancient shrine and cultural center</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(3)">Day 3 - November 10</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.6339, 130.2211)">
+                        <div class="attraction-icon">🏖️</div>
+                        <div class="attraction-details">
+                            <h3>Momochihama Beach</h3>
+                            <p>Seaside relaxation and Fukuoka Tower</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.6339, 130.2028)">
+                        <div class="attraction-icon">🗼</div>
+                        <div class="attraction-details">
+                            <h3>Fukuoka Tower</h3>
+                            <p>Panoramic city and ocean views</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(4)">Day 4 - November 11</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.4569, 130.5183)">
+                        <div class="attraction-icon">⛩️</div>
+                        <div class="attraction-details">
+                            <h3>Dazaifu Tenmangu</h3>
+                            <p>Sacred shrine dedicated to learning</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5167, 130.5183)">
+                        <div class="attraction-icon">🎋</div>
+                        <div class="attraction-details">
+                            <h3>Bamboo Forest Walk</h3>
+                            <p>Peaceful nature trails</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(5)">Day 5 - November 12</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.5852, 130.3947)">
+                        <div class="attraction-icon">🏮</div>
+                        <div class="attraction-details">
+                            <h3>Canal City Hakata</h3>
+                            <p>Shopping complex with canal and fountains</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5903, 130.4200)">
+                        <div class="attraction-icon">🌸</div>
+                        <div class="attraction-details">
+                            <h3>Ohori Park</h3>
+                            <p>Traditional Japanese garden and lake</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(6)">Day 6 - November 13</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.6597, 130.6086)">
+                        <div class="attraction-icon">🏔️</div>
+                        <div class="attraction-details">
+                            <h3>Mt. Hiko Day Trip</h3>
+                            <p>Hiking and mountain shrine</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5904, 130.4017)">
+                        <div class="attraction-icon">♨️</div>
+                        <div class="attraction-details">
+                            <h3>Onsen Experience</h3>
+                            <p>Traditional hot springs relaxation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(7)">Day 7 - November 14</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.5833, 130.3000)">
+                        <div class="attraction-icon">🏝️</div>
+                        <div class="attraction-details">
+                            <h3>Nokonoshima Island</h3>
+                            <p>Ferry trip to flower island paradise</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5914, 130.3986)">
+                        <div class="attraction-icon">🍻</div>
+                        <div class="attraction-details">
+                            <h3>Nakasu Nightlife</h3>
+                            <p>Entertainment district exploration</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(8)">Day 8 - November 15</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.5889, 130.4170)">
+                        <div class="attraction-icon">🏨</div>
+                        <div class="attraction-details">
+                            <h3>B Hakata Hotel Area</h3>
+                            <p>Last-minute shopping near your hotel</p>
+                        </div>
+                    </div>
+                    <div class="attraction-item" onclick="focusLocation(33.5845, 130.3933)">
+                        <div class="attraction-icon">🎁</div>
+                        <div class="attraction-details">
+                            <h3>Souvenir Shopping</h3>
+                            <p>Traditional crafts and local specialties</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="itinerary-day">
+                <div class="day-header" onclick="filterByDay(9)">Day 9 - November 16 (Departure)</div>
+                <div class="day-attractions">
+                    <div class="attraction-item" onclick="focusLocation(33.5859, 130.4508)">
+                        <div class="attraction-icon">✈️</div>
+                        <div class="attraction-details">
+                            <h3>Fukuoka Airport</h3>
+                            <p>Departure preparations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+        
+        <div class="legend">
+            <h4>🗺️ Attraction Types</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff6b6b;"></div>
+                <span>Historical Sites</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4ecdc4;"></div>
+                <span>Nature & Parks</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #45b7d1;"></div>
+                <span>Food & Culture</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #96ceb4;"></div>
+                <span>Shopping & Entertainment</span>
+            </div>
+        </div>
+
+        <div class="transport-legend">
+            <h4>🚊 Transportation Lines</h4>
+            <div class="legend-item">
+                <div class="legend-line" style="background: #FF5722; border: 1px dashed #FF5722;"></div>
+                <span>Walking</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line" style="background: #2196F3;"></div>
+                <span>Subway/Train</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line" style="background: #FF9800;"></div>
+                <span>Long Distance Train</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line" style="background: #4CAF50; border: 1px dashed #4CAF50;"></div>
+                <span>Direct Route</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map centered on Fukuoka with English tiles
+        const map = L.map('map').setView([33.5904, 130.4017], 11);
+
+        // Use OpenStreetMap standard tiles which are in English
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Home base hotel coordinates
+        const homeBase = {
+            name: "The B Hakata Hotel",
+            lat: 33.5889,
+            lng: 130.4170,
+            description: "Your home base in Fukuoka - modern hotel near Hakata Station"
+        };
+
+        // Attraction data with real coordinates and directions from B Hakata Hotel
+        const attractions = [
+            {
+                name: "Tenjin District",
+                lat: 33.5904,
+                lng: 130.4017,
+                category: "Shopping & Entertainment",
+                description: "Heart of Fukuoka with shopping, dining, and entertainment. Perfect for your first day exploration.",
+                icon: "🏨",
+                color: "#96ceb4",
+                day: 1,
+                transport: "From hotel: Walk 3 min to Hakata Station → Airport Line to Tenjin (5 min)"
+            },
+            {
+                name: "Yatai Food Stalls",
+                lat: 33.5914,
+                lng: 130.3986,
+                category: "Food & Culture",
+                description: "Traditional mobile food stalls along the river. Experience authentic Fukuoka street food culture.",
+                icon: "🍜",
+                color: "#45b7d1",
+                day: 1,
+                transport: "From hotel: Walk 7 min or Hakata Station → Airport Line to Nakasu-Kawabata (3 min)"
+            },
+            {
+                name: "Ichiran Ramen Honten",
+                lat: 33.5893,
+                lng: 130.4015,
+                category: "Food & Culture",
+                description: "The original Ichiran location where tonkotsu ramen was perfected. Must-try authentic Hakata ramen experience.",
+                icon: "🍲",
+                color: "#45b7d1",
+                day: 1,
+                transport: "From hotel: Walk 3 min to Hakata → Airport Line to Tenjin (5 min) → Walk 2 min"
+            },
+            {
+                name: "Fukuoka Castle Ruins",
+                lat: 33.6066,
+                lng: 130.4181,
+                category: "Historical Sites",
+                description: "Historic castle grounds in Maizuru Park. Beautiful views and cherry blossoms in season.",
+                icon: "🏯",
+                color: "#ff6b6b",
+                day: 2,
+                transport: "From hotel: Hakata Station → Airport Line to Ohori-koen (7 min) → Walk 2 min"
+            },
+            {
+                name: "Kushida Shrine",
+                lat: 33.5845,
+                lng: 130.3933,
+                category: "Historical Sites",
+                description: "Ancient Shinto shrine, home to the famous Hakata Gion Yamakasa festival.",
+                icon: "⛩️",
+                color: "#ff6b6b",
+                day: 2,
+                transport: "From hotel: Walk 3 min to Hakata → Airport Line to Gion (2 min) → Walk 5 min"
+            },
+            {
+                name: "Momochihama Beach",
+                lat: 33.6339,
+                lng: 130.2211,
+                category: "Nature & Parks",
+                description: "Artificial beach with stunning views of Hakata Bay. Perfect for relaxation.",
+                icon: "🏖️",
+                color: "#4ecdc4",
+                day: 3,
+                transport: "From hotel: Hakata → Airport Line to Nishijin (10 min) → Bus 306 to Momochihama (15 min)"
+            },
+            {
+                name: "Fukuoka Tower",
+                lat: 33.6339,
+                lng: 130.2028,
+                category: "Nature & Parks",
+                description: "234m tall tower offering panoramic views of the city and ocean. Stunning at sunset.",
+                icon: "🗼",
+                color: "#4ecdc4",
+                day: 3,
+                transport: "From hotel: Same route to Momochihama Beach → Walk 5 min"
+            },
+            {
+                name: "Dazaifu Tenmangu",
+                lat: 33.4569,
+                lng: 130.5183,
+                category: "Historical Sites",
+                description: "Sacred shrine dedicated to the god of learning. Beautiful plum blossoms and historic architecture.",
+                icon: "⛩️",
+                color: "#ff6b6b",
+                day: 4,
+                transport: "From hotel: Hakata → Airport Line to Tenjin (5 min) → Dazaifu Line (30 min)"
+            },
+            {
+                name: "Bamboo Forest Walk",
+                lat: 33.5167,
+                lng: 130.5183,
+                category: "Nature & Parks",
+                description: "Peaceful bamboo grove trails near Dazaifu",
+                icon: "🎋",
+                color: "#4ecdc4",
+                day: 4,
+                transport: "From Dazaifu Tenmangu: Walk 10 min"
+            },
+            {
+                name: "Canal City Hakata",
+                lat: 33.5852,
+                lng: 130.3947,
+                category: "Shopping & Entertainment",
+                description: "Unique shopping complex with an artificial canal running through it. Great for shopping and dining.",
+                icon: "🏮",
+                color: "#96ceb4",
+                day: 5,
+                transport: "From hotel: Walk 3 min to Hakata → Airport Line to Nakasu-Kawabata (3 min) → Walk 5 min"
+            },
+            {
+                name: "Ohori Park",
+                lat: 33.5903,
+                lng: 130.4200,
+                category: "Nature & Parks",
+                description: "Traditional Japanese garden surrounding a beautiful lake. Perfect for peaceful walks.",
+                icon: "🌸",
+                color: "#4ecdc4",
+                day: 5,
+                transport: "From hotel: Hakata Station → Airport Line to Ohori-koen (7 min) → Direct access"
+            },
+            {
+                name: "Mt. Hiko",
+                lat: 33.6597,
+                lng: 130.6086,
+                category: "Nature & Parks",
+                description: "Mountain hiking and shrine experience. Beautiful nature and spiritual journey.",
+                icon: "🏔️",
+                color: "#4ecdc4",
+                day: 6,
+                transport: "From hotel: Hakata → JR Chikuhi Line to Chikuzen-Ikki (45 min) → Bus to Mt. Hiko"
+            },
+            {
+                name: "Onsen Experience",
+                lat: 33.5904,
+                lng: 130.4017,
+                category: "Food & Culture",
+                description: "Traditional Japanese hot springs for relaxation",
+                icon: "♨️",
+                color: "#45b7d1",
+                day: 6,
+                transport: "Various locations in Tenjin area"
+            },
+            {
+                name: "Nokonoshima Island",
+                lat: 33.5833,
+                lng: 130.3000,
+                category: "Nature & Parks",
+                description: "Small island paradise accessible by ferry. Famous for seasonal flowers and beautiful coastline.",
+                icon: "🏝️",
+                color: "#4ecdc4",
+                day: 7,
+                transport: "From hotel: Hakata → JR Chikuhi Line to Meinohama (20 min) → Ferry (10 min)"
+            },
+            {
+                name: "Nakasu Nightlife",
+                lat: 33.5914,
+                lng: 130.3986,
+                category: "Shopping & Entertainment",
+                description: "Entertainment district with bars, clubs, and restaurants",
+                icon: "🍻",
+                color: "#96ceb4",
+                day: 7,
+                transport: "From hotel: Walk 7 min or take subway to Nakasu-Kawabata"
+            },
+            {
+                name: "B Hakata Hotel Area",
+                lat: 33.5889,
+                lng: 130.4170,
+                category: "Shopping & Entertainment",
+                description: "Shopping and dining near your hotel. Perfect for last-minute souvenirs.",
+                icon: "🛍️",
+                color: "#96ceb4",
+                day: 8,
+                transport: "From hotel: Walk 2 min to nearby shops and restaurants"
+            },
+            {
+                name: "Souvenir Shopping",
+                lat: 33.5845,
+                lng: 130.3933,
+                category: "Shopping & Entertainment",
+                description: "Traditional crafts and local specialties in old town area",
+                icon: "🎁",
+                color: "#96ceb4",
+                day: 8,
+                transport: "From hotel: Walk to Hakata old town area (10 min)"
+            },
+            {
+                name: "Fukuoka Airport",
+                lat: 33.5859,
+                lng: 130.4508,
+                category: "Transportation",
+                description: "International airport serving Fukuoka. Your departure point for this amazing journey.",
+                icon: "✈️",
+                color: "#96ceb4",
+                day: 9,
+                transport: "From hotel: Walk 3 min to Hakata Station → Airport Line direct (5 min)"
+            }
+        ];
+
+        // Custom marker icons
+        function createCustomIcon(emoji, color) {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: ${color};
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                    border: 3px solid white;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    cursor: pointer;
+                    transition: transform 0.3s ease;
+                ">${emoji}</div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+                popupAnchor: [0, -20]
+            });
+        }
+
+        // Store all markers for day filtering
+        let allMarkers = [];
+        let currentFilter = 'all';
+        let routingLine = null;
+        let routeLabels = [];
+
+        // Add home base hotel marker
+        const hotelIcon = L.divIcon({
+            className: 'hotel-marker',
+            html: `<div style="
+                background: #ff4757;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                border: 4px solid white;
+                box-shadow: 0 4px 15px rgba(255,71,87,0.5);
+                cursor: pointer;
+                transition: transform 0.3s ease;
+            ">🏨</div>`,
+            iconSize: [50, 50],
+            iconAnchor: [25, 25],
+            popupAnchor: [0, -25]
+        });
+
+        const hotelMarker = L.marker([homeBase.lat, homeBase.lng], {
+            icon: hotelIcon
+        }).addTo(map);
+
+        hotelMarker.bindPopup(`
+            <div class="custom-popup">
+                <div class="popup-title">🏠 ${homeBase.name}</div>
+                <div class="popup-description">${homeBase.description}</div>
+                <div style="margin: 8px 0; padding: 8px; background: #e8f5e8; border-radius: 5px;">
+                    <strong>🎯 Your Home Base</strong><br>
+                    <span style="font-size: 12px;">All directions start from here!</span>
+                </div>
+                <span class="popup-category">Home Base</span>
+            </div>
+        `, {
+            maxWidth: 280,
+            className: 'custom-popup-wrapper'
+        });
+
+        // Add markers to map
+        attractions.forEach(attraction => {
+            const marker = L.marker([attraction.lat, attraction.lng], {
+                icon: createCustomIcon(attraction.icon, attraction.color)
+            });
+
+            // Store reference to attraction data
+            marker.attractionData = attraction;
+
+            const popupContent = `
+                <div class="custom-popup">
+                    <div class="popup-title">${attraction.name}</div>
+                    <div class="popup-description">${attraction.description}</div>
+                    <div style="margin: 8px 0; padding: 8px; background: #f0f8ff; border-radius: 5px;">
+                        <strong>🚊 Transport:</strong><br>
+                        <span style="font-size: 12px;">${attraction.transport}</span>
+                    </div>
+                    <span class="popup-category">${attraction.category}</span>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent, {
+                maxWidth: 280,
+                className: 'custom-popup-wrapper',
+                closeOnClick: false
+            });
+
+            // Fix hover behavior - no auto open on hover
+            marker.on('click', function() {
+                clearRoute();
+                this.openPopup();
+                showRouteToAttraction(attraction);
+            });
+
+            allMarkers.push(marker);
+            
+            // Initially add all markers to map
+            marker.addTo(map);
+        });
+
+        // Station coordinates for realistic routing
+        const stations = {
+            hakata: { coords: [33.5889, 130.4200], name: "Hakata Station" },
+            tenjin: { coords: [33.5904, 130.4017], name: "Tenjin Station" },
+            nakasu: { coords: [33.5910, 130.4080], name: "Nakasu-Kawabata Station" },
+            gion: { coords: [33.5866, 130.4120], name: "Gion Station" },
+            ohori: { coords: [33.5903, 130.4200], name: "Ohori-koen Station" },
+            nishijin: { coords: [33.5850, 130.3800], name: "Nishijin Station" },
+            dazaifu: { coords: [33.4569, 130.5183], name: "Dazaifu Station" }
+        };
+
+        // Function to add route label
+        function addRouteLabel(latlng, text, color) {
+            const label = L.divIcon({
+                className: 'route-label',
+                html: `<div class="route-label" style="border-color: ${color}; color: ${color};">${text}</div>`,
+                iconSize: [null, null]
+            });
+            
+            const labelMarker = L.marker(latlng, { icon: label }).addTo(map);
+            routeLabels.push(labelMarker);
+        }
+
+        // Function to show realistic route from hotel to attraction
+        function showRouteToAttraction(attraction) {
+            // Remove existing route line and labels
+            clearRoute();
+
+            // Create route group
+            routingLine = L.layerGroup();
+
+            // Get route based on attraction name
+            let routePoints = [];
+            let routeColor = '#2196F3';
+            let stationStops = [];
+            
+            switch(attraction.name) {
+                case "Tenjin District":
+                case "Ichiran Ramen Honten":
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        stations.hakata.coords,
+                        stations.tenjin.coords,
+                        [attraction.lat, attraction.lng]
+                    ];
+                    stationStops = [stations.hakata, stations.tenjin];
+                    break;
+                    
+                case "Yatai Food Stalls":
+                case "Nakasu Nightlife":
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        stations.hakata.coords,
+                        stations.nakasu.coords,
+                        [attraction.lat, attraction.lng]
+                    ];
+                    stationStops = [stations.hakata, stations.nakasu];
+                    break;
+                    
+                case "Fukuoka Castle Ruins":
+                case "Ohori Park":
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        stations.hakata.coords,
+                        stations.ohori.coords,
+                        [attraction.lat, attraction.lng]
+                    ];
+                    stationStops = [stations.hakata, stations.ohori];
+                    break;
+                    
+                case "Kushida Shrine":
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        stations.hakata.coords,
+                        stations.gion.coords,
+                        [attraction.lat, attraction.lng]
+                    ];
+                    stationStops = [stations.hakata, stations.gion];
+                    break;
+                    
+                case "Dazaifu Tenmangu":
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        stations.hakata.coords,
+                        stations.tenjin.coords,
+                        [attraction.lat, attraction.lng]
+                    ];
+                    stationStops = [stations.hakata, stations.tenjin];
+                    routeColor = '#FF9800'; // Orange for longer routes
+                    break;
+                    
+                default:
+                    // Direct route for others
+                    routePoints = [
+                        [homeBase.lat, homeBase.lng],
+                        [attraction.lat, attraction.lng]
+                    ];
+                    routeColor = '#4CAF50'; // Green for direct routes
+            }
+
+            // Draw route segments
+            if (routePoints.length > 2) {
+                // Walking to station (dashed red)
+                const walkToStation = L.polyline([routePoints[0], routePoints[1]], {
+                    color: '#FF5722',
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '5, 10'
+                });
+                routingLine.addLayer(walkToStation);
+                addRouteLabel(routePoints[0], '🚶 Walk', '#FF5722');
+
+                // Train/subway segments (solid blue)
+                for (let i = 1; i < routePoints.length - 1; i++) {
+                    const trainSegment = L.polyline([routePoints[i], routePoints[i + 1]], {
+                        color: routeColor,
+                        weight: 6,
+                        opacity: 0.9
+                    });
+                    routingLine.addLayer(trainSegment);
+                }
+
+                // Add station markers and labels
+                stationStops.forEach((station) => {
+                    const stationMarker = L.circleMarker(station.coords, {
+                        color: '#FFF',
+                        fillColor: routeColor,
+                        fillOpacity: 1,
+                        radius: 8,
+                        weight: 3
+                    });
+                    routingLine.addLayer(stationMarker);
+                    addRouteLabel(station.coords, `🚉 ${station.name}`, routeColor);
+                });
+
+                // Final walking segment if needed
+                const lastSegmentDistance = map.distance(
+                    routePoints[routePoints.length - 2], 
+                    routePoints[routePoints.length - 1]
+                );
+                
+                if (lastSegmentDistance > 100) { // If more than 100m
+                    const lastSegment = L.polyline([
+                        routePoints[routePoints.length - 2], 
+                        routePoints[routePoints.length - 1]
+                    ], {
+                        color: '#FF5722',
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: '5, 10'
+                    });
+                    routingLine.addLayer(lastSegment);
+                }
+            } else {
+                // Simple direct route
+                const directRoute = L.polyline(routePoints, {
+                    color: routeColor,
+                    weight: 5,
+                    opacity: 0.8,
+                    dashArray: '10, 5'
+                });
+                routingLine.addLayer(directRoute);
+                addRouteLabel(
+                    [(routePoints[0][0] + routePoints[1][0])/2, (routePoints[0][1] + routePoints[1][1])/2],
+                    '🚶 Direct Walk',
+                    routeColor
+                );
+            }
+
+            // Add destination label
+            addRouteLabel([attraction.lat, attraction.lng], `📍 ${attraction.name}`, attraction.color);
+
+            // Add to map
+            routingLine.addTo(map);
+
+            // Focus on the route
+            const bounds = L.latLngBounds(routePoints);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        // Function to focus on specific location
+        function focusLocation(lat, lng) {
+            clearRoute();
+            map.setView([lat, lng], 15, {
+                animate: true,
+                duration: 1
+            });
+            
+            // Find and open the popup for this location
+            allMarkers.forEach(marker => {
+                if (marker.attractionData && 
+                    Math.abs(marker.attractionData.lat - lat) < 0.001 && 
+                    Math.abs(marker.attractionData.lng - lng) < 0.001) {
+                    marker.openPopup();
+                }
+            });
+        }
+
+        // Day filtering functions
+        function filterByDay(day) {
+            currentFilter = day;
+            
+            // Close all popups and remove route lines
+            map.closePopup();
+            clearRoute();
+            
+            // Update day header active states
+            document.querySelectorAll('.day-header').forEach(header => {
+                header.classList.remove('active');
+            });
+            const activeHeader = document.querySelector(`[onclick="filterByDay(${day})"]`);
+            if (activeHeader) {
+                activeHeader.classList.add('active');
+            }
+            
+            // Filter markers - remove and re-add based on day
+            allMarkers.forEach(marker => {
+                const markerDay = marker.attractionData ? marker.attractionData.day : null;
+                
+                if (markerDay === day) {
+                    if (!map.hasLayer(marker)) {
+                        marker.addTo(map);
+                    }
+                    marker.setOpacity(1);
+                    if (marker._icon) {
+                        marker._icon.style.transform = 'scale(1.2)';
+                        marker._icon.style.zIndex = '1000';
+                    }
+                } else {
+                    // Remove markers not from this day
+                    if (map.hasLayer(marker)) {
+                        map.removeLayer(marker);
+                    }
+                }
+            });
+            
+            // Focus map on day's attractions
+            const dayAttractions = attractions.filter(a => a.day === day);
+            if (dayAttractions.length > 0) {
+                const bounds = L.latLngBounds(dayAttractions.map(a => [a.lat, a.lng]));
+                // Include hotel in bounds
+                bounds.extend([homeBase.lat, homeBase.lng]);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+        
+        function showAllDays() {
+            currentFilter = 'all';
+            
+            // Close all popups and remove route lines
+            map.closePopup();
+            clearRoute();
+            
+            // Remove active states
+            document.querySelectorAll('.day-header').forEach(header => {
+                header.classList.remove('active');
+            });
+            
+            // Show all markers normally
+            allMarkers.forEach(marker => {
+                if (!map.hasLayer(marker)) {
+                    marker.addTo(map);
+                }
+                marker.setOpacity(1);
+                if (marker._icon) {
+                    marker._icon.style.transform = 'scale(1)';
+                    marker._icon.style.zIndex = 'auto';
+                }
+            });
+            
+            // Reset map view to show all of Fukuoka
+            map.setView([33.5904, 130.4017], 11);
+        }
+
+        // Function to clear route lines and labels
+        function clearRoute() {
+            if (routingLine) {
+                map.removeLayer(routingLine);
+                routingLine = null;
+            }
+            routeLabels.forEach(label => {
+                map.removeLayer(label);
+            });
+            routeLabels = [];
+            map.closePopup();
+        }
+
+        // Add custom CSS for markers
+        const style = document.createElement('style');
+        style.textContent = `
+            .custom-marker > div:hover {
+                transform: scale(1.1) !important;
+                z-index: 1000 !important;
+            }
+            
+            .leaflet-popup-content {
+                margin: 15px !important;
+            }
+            
+            .leaflet-popup-close-button {
+                font-size: 18px !important;
+                padding: 8px !important;
+            }
+            
+            .route-label {
+                white-space: nowrap;
+                font-weight: 600;
+                pointer-events: none;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
